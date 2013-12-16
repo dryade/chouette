@@ -8,13 +8,14 @@
 
 package fr.certu.chouette.exchange.gtfs.exporter;
 
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.TimeZone;
-
-import org.apache.log4j.Logger;
 
 import lombok.Setter;
 
+import org.apache.log4j.Logger;
 
 import fr.certu.chouette.exchange.gtfs.exporter.producer.IGtfsProducer;
 import fr.certu.chouette.exchange.gtfs.exporter.report.GtfsReport;
@@ -98,6 +99,29 @@ public class GtfsDataProducer
          throw new GtfsExportException(GtfsExportExceptionCode.ERROR, "missing data");
       // check if no data for one or more types 
       boolean error = false;
+      
+      // Trim references to non-existing or non-exported parent stations
+      Set<String> stationIds = new HashSet<String>();
+      for (GtfsStop station : gtfsData.getStops())
+      {
+    	  if (station.getLocationType() == GtfsStop.STATION)
+    	  {
+    		  stationIds.add(station.getStopId());
+    	  }
+      }
+      for (GtfsStop stop : gtfsData.getStops())
+      {
+    	  if (stop.getLocationType() == GtfsStop.STOP)
+    	  {
+    		  if (!stationIds.contains(stop.getParentStation()))
+    		  {
+    			  stop.setParentStation(null);
+    			  GtfsReportItem item = new GtfsReportItem(GtfsReportItem.KEY.MISSING_DATA, STATE.WARNING, "Stop", stop.getStopId(), "parentStation");
+    			  report.addItem(item);
+    		  }
+    	  }
+      }
+      
       if (gtfsData.getAgencies().isEmpty()) 
       {
          logger.error("no company for agencies.txt");
