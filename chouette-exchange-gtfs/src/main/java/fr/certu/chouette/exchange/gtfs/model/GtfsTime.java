@@ -10,6 +10,7 @@ package fr.certu.chouette.exchange.gtfs.model;
 
 import java.sql.Time;
 import java.text.MessageFormat;
+import java.util.Calendar;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -59,15 +60,15 @@ public class GtfsTime implements Comparable<GtfsTime>
 
 	public String toString()
 	{
-
-		long h = time.getTime()/1000;
-		long s = h%60;
-		h=h/60;
-		long m = h % 60;
-		h=h/60;
-		if (tomorrow) h+= 24;
+		// This will use default JVM timezone
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(time);
+		long h = cal.get(Calendar.HOUR_OF_DAY);
+		long m = cal.get(Calendar.MINUTE);
+		long s = cal.get(Calendar.SECOND);
+		if (tomorrow)
+			h+=24;
 		return MessageFormat.format(mfHoraireHMS,h,m,s);
-
 	}
 
     public String toSeconds()
